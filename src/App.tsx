@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import './App.css';
 
 function useEffectCustom(_cb: () => void, deps) {
@@ -22,9 +22,20 @@ function useEffectCustom(_cb: () => void, deps) {
   //with dependency
 }
 
+function useMemoCustom(cb, deps) {
+  let prevDependency = useRef([]);
+  if(deps && JSON.stringify(prevDependency.current) !== JSON.stringify(deps)) {
+    prevDependency.current = deps ? deps: [];
+    return cb();
+  } else {
+    return prevDependency.current;
+  }
+}
+
 let deb = myDebounce((val) => {
   console.log(val, 'clicked');
 }, 5000);
+
 let throtle = myThrottle((val) => {
   console.log(val, 'clicked');
 }, 5000);
@@ -54,7 +65,8 @@ function myThrottle(cb, delay) {
 }
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [count1, setCount1] = useState(0);
+  const [count2, setCount2] = useState(100);
 
   useEffectCustom(() => {
     console.log('rendered');
@@ -63,13 +75,28 @@ function App() {
     };
   }, []);
 
+  const squareNum = () => {
+    console.log('square triggered');
+    return count1 * count1;
+  }
+
+ // use custom memo here for squarenum expensive func
+ let memoizedValue = useMemoCustom(squareNum, [count1]);
+
+
   return (
     <>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+        <button onClick={() => setCount1((count1) => count1 + 1)}>
+          Increment {count1}
         </button>
+        <button onClick={() => setCount2((count2) => count2 - 1)}>
+          Decrement {count2}
+        </button>
+        <span>squared value is: {memoizedValue}</span>
       </div>
+
+
       <input type="button" onClick={() => deb('debounce')} value="debounce" />
       <input
         type="button"
